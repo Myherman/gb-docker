@@ -1,0 +1,79 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: redmine
+  namespace: redmine
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: redmine
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: redmine
+    namespace: redmine
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redmine
+  namespace: redmine
+spec:
+  replicas: 1 
+  selector:
+    matchLabels:
+      app: redmine
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: redmine
+    spec:
+      serviceAccountName: redmine
+      containers:
+      - image: redmine:4.1.1
+        name: redmine
+        ports:
+        - containerPort: 3000
+          protocol: TCP
+        envFrom:
+        - secretRef:
+            name: redmine-pass
+        - configMapRef:
+            name: redmine-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redmine
+  namespace: redmine
+spec:
+  ports:
+  - port: 3000
+    targetPort: 3000
+  selector:
+    app: redmine
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: database
+  namespace: postgres
+spec:
+  ports:
+  - port: 5432
+    targetPort: 5432
+  selector:
+    app: postgres
+  type: ClusterIP
