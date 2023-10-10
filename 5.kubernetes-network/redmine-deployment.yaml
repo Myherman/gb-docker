@@ -64,16 +64,3 @@ spec:
     app: redmine
   type: ClusterIP
 
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: database
-  namespace: postgres
-spec:
-  ports:
-  - port: 5432
-    targetPort: 5432
-  selector:
-    app: postgres
-  type: ClusterIP
